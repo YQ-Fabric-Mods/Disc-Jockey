@@ -44,6 +44,7 @@
   "disc_jockey.screen.songstate.tuning": "调音中...",
   "disc_jockey.screen.please_select_song": "请选择一首歌曲",
   "disc_jockey.screen.config": "设置",
+  "disc_jockey.screen.open_folder": "打开歌曲文件夹",
   "text.autoconfig.disc_jockey.title": "Disc Jockey",
   "text.autoconfig.disc_jockey.option.hideWarning": "隐藏警告",
   "text.autoconfig.disc_jockey.option.disableAsyncPlayback": "禁用异步播放",

@@ -25,11 +25,6 @@ public class SongListWidget extends ObjectSelectionList<SongListWidget.SongEntry
     }
 
     @Override
-    protected int scrollBarX() {
-        return width - 12;
-    }
-
-    @Override
     public void setSelected(@Nullable SongListWidget.SongEntry entry) {
         SongListWidget.SongEntry selectedEntry = getSelected();
         if (selectedEntry != null) selectedEntry.selected = false;
@@ -42,7 +37,6 @@ public class SongListWidget extends ObjectSelectionList<SongListWidget.SongEntry
         // Who cares
     }
 
-    // TODO: 6/2/2022 Add a delete icon
     public static class SongEntry extends Entry<SongEntry> {
         private static final Identifier ICONS = Identifier.fromNamespaceAndPath(Main.MOD_ID, "textures/gui/icons.png");
 
@@ -73,22 +67,23 @@ public class SongListWidget extends ObjectSelectionList<SongListWidget.SongEntry
             int entryWidth = getWidth();
             int entryHeight = getHeight();
 
-            if (selected) {
+            boolean isSelected = songListWidget != null && this.equals(songListWidget.getSelected());
+            if (isSelected) {
                 context.fill(x, y, x + entryWidth, y + entryHeight, 0xFFFFFFFF);
                 context.fill(x + 1, y + 1, x + entryWidth - 1, y + entryHeight - 1, 0xFF000000);
             }
 
-            context.centeredText(client.font, song.displayName, x + entryWidth / 2, y + 5, selected ? 0xFFFFFFFF : 0xFF808080);
+            context.centeredText(client.font, song.displayName, x + entryWidth / 2, y + 6, isSelected ? 0xFFFFFFFF : 0xFF808080);
 
             int u = (favorite ? 26 : 0) + (isOverFavoriteButton(mouseX, mouseY) ? 13 : 0);
-            context.blit(RenderPipelines.GUI_TEXTURED, ICONS, x + 2, y + 2, (float)u, 0.0f, 13, 12, 52, 12);
+            context.blit(RenderPipelines.GUI_TEXTURED, ICONS, x + 4, y + 3, (float)u, 0.0f, 13, 12, 52, 12);
         }
 
         @Override
         public boolean mouseClicked(MouseButtonEvent event, boolean something) {
             double mouseX = event.x();
             double mouseY = event.y();
-            if (mouseX > x + 2 && mouseX < x + 15 && mouseY > y + 2 && mouseY < y + 14) {
+            if (mouseX > x + 4 && mouseX < x + 17 && mouseY > y + 3 && mouseY < y + 15) {
                 favorite = !favorite;
                 if (favorite) {
                     Main.config.favorites.add(song.fileName);
@@ -102,7 +97,7 @@ public class SongListWidget extends ObjectSelectionList<SongListWidget.SongEntry
         }
 
         private boolean isOverFavoriteButton(int mouseX, int mouseY) {
-            return mouseX > x + 2 && mouseX < x + 15 && mouseY > y + 2 && mouseY < y + 14;
+            return mouseX > x + 4 && mouseX < x + 17 && mouseY > y + 3 && mouseY < y + 15;
         }
     }
 }

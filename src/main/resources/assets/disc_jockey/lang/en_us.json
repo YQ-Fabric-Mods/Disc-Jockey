@@ -44,6 +44,7 @@
   "disc_jockey.screen.songstate.tuning": "Tuning...",
   "disc_jockey.screen.please_select_song": "Please select a song",
   "disc_jockey.screen.config": "Config",
+  "disc_jockey.screen.open_folder": "Open Song Folder",
   "text.autoconfig.disc_jockey.title": "Disc Jockey",
   "text.autoconfig.disc_jockey.option.hideWarning": "Hide Warning",
   "text.autoconfig.disc_jockey.option.disableAsyncPlayback": "Disable Async Playback",

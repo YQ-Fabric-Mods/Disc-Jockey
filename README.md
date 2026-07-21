@@ -1,1 +1,3 @@
-Download the mod at [Modrinth](https://modrinth.com/mod/disc-jockey) or [CurseForge](https://www.curseforge.com/minecraft/mc-mods/disc-jockey)
+A fork version of [Disc Jockey](https://github.com/SemmieDev/Disc-Jockey)
+
+Download the mod at [Modrinth](https://modrinth.com/mod/discjockey-fork)

@@ -81,17 +81,19 @@ public class SongPlayer implements ClientTickEvents.StartLevelTick {
             return;
         }
 
-        this.playbackThread = Thread.startVirtualThread(() -> {
-            while (this.playbackThread == Thread.currentThread()) {
+        this.playbackThread = Thread.ofVirtual().unstarted(() -> {
+            Thread ownThread = Thread.currentThread();
+            while (this.playbackThread == ownThread) {
                 try {
                     // Accuracy doesn't really matter at this precision imo
                     Thread.sleep(playbackLoopDelay);
                 }catch (Exception ex) {
-                    ex.printStackTrace();
+                    Main.LOGGER.warn("Exception in playback thread", ex);
                 }
                 tickPlayback();
             }
         });
+        this.playbackThread.start();
     }
 
     public synchronized void stopPlaybackThread() {
@@ -473,14 +475,14 @@ public class SongPlayer implements ClientTickEvents.StartLevelTick {
             try {
                 tickPlayback();
             }catch (Exception ex) {
-                ex.printStackTrace();
+                Main.LOGGER.warn("Exception in sync playback", ex);
                 stop();
             }
         }
     }
 
     private HashMap<Byte, BlockPos> getNotes(NoteBlockInstrument instrument) {
-        return noteBlocks.computeIfAbsent(instrument, k -> new HashMap<>());
+        return noteBlocks.computeIfAbsent(instrument, _ -> new HashMap<>());
     }
 
     // Before 1.20.5, the server limits interacts to 6 Blocks from Player Eye to Block Center

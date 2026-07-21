@@ -10,6 +10,7 @@ import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
+import net.minecraft.util.Util;
 import net.minecraft.world.item.ItemStack;
 import org.jspecify.annotations.NonNull;
 import semmiedev.disc_jockey.*;
@@ -104,41 +105,44 @@ public class DiscJockeyScreen extends Screen {
         addRenderableWidget(previewButton);
 
         addRenderableWidget(Button.builder(Component.translatable(Main.MOD_ID + ".screen.blocks"), _ -> {
-            if (BlocksOverlay.itemStacks == null) {
                 SongListWidget.SongEntry entry = songListWidget.getSelected();
-                if (entry != null) {
-                    minecraft.gui.setScreen(null);
+                if (entry == null) return;
 
-                    BlocksOverlay.itemStacks = new ItemStack[0];
-                    BlocksOverlay.amounts = new int[0];
-                    BlocksOverlay.amountOfNoteBlocks = entry.song.uniqueNotes.size();
+                // Same song -> close overlay
+                // different/not shown -> show/update
+                if (BlocksOverlay.itemStacks != null && entry.song.fileName.equals(BlocksOverlay.songFileName)) {
+                    BlocksOverlay.itemStacks = null;
+                    return;
+                }
 
-                    for (Note note : entry.song.uniqueNotes) {
-                        ItemStack itemStack = Note.INSTRUMENT_BLOCKS.get(note.instrument()).asItem().getDefaultInstance();
-                        int index = -1;
+                minecraft.gui.setScreen(null);
 
-                        for (int i = 0; i < BlocksOverlay.itemStacks.length; i++) {
-                            if (BlocksOverlay.itemStacks[i].getItem() == itemStack.getItem()) {
-                                index = i;
-                                break;
-                            }
-                        }
+                BlocksOverlay.songFileName = entry.song.fileName;
+                BlocksOverlay.amountOfNoteBlocks = entry.song.uniqueNotes.size();
+                BlocksOverlay.itemStacks = new ItemStack[0];
+                BlocksOverlay.amounts = new int[0];
 
-                        if (index == -1) {
-                            BlocksOverlay.itemStacks = Arrays.copyOf(BlocksOverlay.itemStacks, BlocksOverlay.itemStacks.length + 1);
-                            BlocksOverlay.amounts = Arrays.copyOf(BlocksOverlay.amounts, BlocksOverlay.amounts.length + 1);
+                for (Note note : entry.song.uniqueNotes) {
+                    ItemStack itemStack = Note.INSTRUMENT_BLOCKS.get(note.instrument()).asItem().getDefaultInstance();
+                    int index = -1;
 
-                            BlocksOverlay.itemStacks[BlocksOverlay.itemStacks.length - 1] = itemStack;
-                            BlocksOverlay.amounts[BlocksOverlay.amounts.length - 1] = 1;
-                        } else {
-                            BlocksOverlay.amounts[index] = BlocksOverlay.amounts[index] + 1;
+                    for (int i = 0; i < BlocksOverlay.itemStacks.length; i++) {
+                        if (BlocksOverlay.itemStacks[i].getItem() == itemStack.getItem()) {
+                            index = i;
+                            break;
                         }
                     }
+
+                    if (index == -1) {
+                        BlocksOverlay.itemStacks = Arrays.copyOf(BlocksOverlay.itemStacks, BlocksOverlay.itemStacks.length + 1);
+                        BlocksOverlay.amounts = Arrays.copyOf(BlocksOverlay.amounts, BlocksOverlay.amounts.length + 1);
+
+                        BlocksOverlay.itemStacks[BlocksOverlay.itemStacks.length - 1] = itemStack;
+                        BlocksOverlay.amounts[BlocksOverlay.amounts.length - 1] = 1;
+                    } else {
+                        BlocksOverlay.amounts[index] = BlocksOverlay.amounts[index] + 1;
+                    }
                 }
-            } else {
-                BlocksOverlay.itemStacks = null;
-                minecraft.gui.setScreen(null);
-            }
         }).bounds(btnStart + (btnW + gap) * 2, btnY, btnW, 20).build());
 
         int searchW = Math.min(150, width / 2 - 30);
@@ -161,10 +165,10 @@ public class DiscJockeyScreen extends Screen {
         songTitle = new StringWidget(leftX, topY + 20, leftWidth, 20, Component.empty(), font);
         addRenderableWidget(songTitle);
 
-        timeBar = new SongTimeSliderWidget(leftX, topY + 40, leftWidth, 30);
+        timeBar = new SongTimeSliderWidget(leftX, topY + 40, leftWidth, 25);
         addRenderableWidget(timeBar);
 
-        int controlsY = topY + 40 + 30 + 5;
+        int controlsY = topY + 40 + 25 + 5;
         playPauseButton = CycleButton.builder(
                 (value) -> Component.literal(value ? "⏸" : "▶"),
                 Main.SONG_PLAYER.running
@@ -186,11 +190,13 @@ public class DiscJockeyScreen extends Screen {
                 .build();
         addRenderableWidget(stopButton);
 
-        // Config button in bottom left
-        Button configButton = Button.builder(CONFIG, _ ->
+        addRenderableWidget(Button.builder(Component.translatable(Main.MOD_ID + ".screen.open_folder"), _ ->
+                Util.getPlatform().openPath(Main.songsFolder.toPath())
+        ).pos(10, height - 55).size(100, 20).build());
+
+        addRenderableWidget(Button.builder(CONFIG, _ ->
                 minecraft.gui.setScreen(me.shedaniel.autoconfig.AutoConfigClient.getConfigScreen(Config.class, this).get())
-        ).pos(10, height - 30).size(100, 20).build();
-        addRenderableWidget(configButton);
+        ).pos(10, height - 30).size(100, 20).build());
     }
 
     private static Component getPlaybackStateText() {

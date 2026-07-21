@@ -20,10 +20,10 @@ public class ClientWorldMixin {
     @Shadow @Final private Minecraft minecraft;
 
     @Inject(method = "playSound(DDDLnet/minecraft/sounds/SoundEvent;Lnet/minecraft/sounds/SoundSource;FFZJ)V", at = @At("HEAD"), cancellable = true)
-    private void makeNoteBlockSoundsOmnidirectional(double x, double y, double z, SoundEvent event, SoundSource category, float volume, float pitch, boolean useDistance, long seed, CallbackInfo ci) {
-        if (((Main.config.omnidirectionalNoteBlockSounds && Main.SONG_PLAYER.running) || Main.PREVIEWER.running) && event.location().getPath().startsWith("block.note_block")) {
+    private void makeNoteBlockSoundsOmnidirectional(double x, double y, double z, SoundEvent sound, SoundSource source, float volume, float pitch, boolean distanceDelay, long seed, CallbackInfo ci) {
+        if (((Main.config.omnidirectionalNoteBlockSounds && Main.SONG_PLAYER.running) || Main.PREVIEWER.running) && sound.location().getPath().startsWith("block.note_block")) {
             ci.cancel();
-            minecraft.getSoundManager().play(new SimpleSoundInstance(event.location(), category, volume, pitch, RandomSource.create(seed), false, 0, SoundInstance.Attenuation.NONE, 0.0, 0.0, 0.0, true));
+            minecraft.getSoundManager().play(new SimpleSoundInstance(sound.location(), source, volume, pitch, RandomSource.create(seed), false, 0, SoundInstance.Attenuation.NONE, 0.0, 0.0, 0.0, true));
         }
     }
 }
