@@ -7,6 +7,8 @@
   "disc_jockey.screen.blocks.title": "方块",
   "disc_jockey.screen.blocks": "方块",
   "disc_jockey.screen.search": "搜索歌曲",
+  "disc_jockey.screen.playback_speed": "播放速度：",
+  "disc_jockey.screen.invalid_playback_speed": "播放速度只允许是 0.0001 到 15 之间的数字",
   "disc_jockey.screen.drop_hint": "将歌曲文件拖放到此窗口以添加",
   "disc_jockey.screen.drop_confirm": "是否将以下歌曲添加到 Disc Jockey？",
   "disc_jockey.player.invalid_note_blocks": "附近的音符盒配置不正确。缺少：",

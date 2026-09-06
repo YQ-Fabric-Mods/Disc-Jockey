@@ -9,6 +9,7 @@ import net.minecraft.client.gui.components.StringWidget;
 import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
+import net.minecraft.client.input.MouseButtonEvent;
 import net.minecraft.network.chat.Component;
 import net.minecraft.network.chat.MutableComponent;
 import net.minecraft.util.Util;
@@ -21,6 +22,7 @@ import semmiedev.disc_jockey.gui.hud.BlocksOverlay;
 
 import java.io.File;
 import java.io.IOException;
+import java.math.BigDecimal;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.Arrays;
@@ -45,11 +47,14 @@ public class DiscJockeyScreen extends Screen {
             PLEASE_SELECT_SONG = Component.translatable(Main.MOD_ID + ".screen.please_select_song").withStyle(style -> style.withItalic(true)),
             CONFIG = Component.translatable(Main.MOD_ID + ".screen.config")
     ;
+    private static final Component PLAYBACK_SPEED = Component.translatable(Main.MOD_ID + ".screen.playback_speed");
+    private static final SystemToast.SystemToastId INVALID_SPEED_TOAST = new SystemToast.SystemToastId();
 
     private StringWidget songTitle;
     private StringWidget songState;
     private CycleButton<Boolean> playPauseButton;
     private SongTimeSliderWidget timeBar;
+    private EditBox speedInput;
 
     private SongListWidget songListWidget;
     private Button playButton, previewButton, refreshButton;
@@ -207,9 +212,58 @@ public class DiscJockeyScreen extends Screen {
                 Util.getPlatform().openPath(Main.songsFolder.toPath())
         ).pos(10, height - 55).size(100, 20).build());
 
+        int speedY = height - 30;
+        int labelWidth = font.width(PLAYBACK_SPEED);
         addRenderableWidget(Button.builder(CONFIG, _ ->
                 minecraft.gui.setScreen(me.shedaniel.autoconfig.AutoConfigClient.getConfigScreen(Config.class, this).get())
-        ).pos(10, height - 30).size(100, 20).build());
+        ).pos(leftX, speedY).size(100, 20).build());
+
+        int speedX = leftX + 100 + 6;
+        addRenderableOnly(new StringWidget(speedX, speedY, labelWidth, 20, PLAYBACK_SPEED, font));
+        speedInput = new EditBox(font, speedX + labelWidth + 2, speedY, 36, 20, PLAYBACK_SPEED) {
+            @Override
+            public void setFocused(boolean focused) {
+                boolean lostFocus = isFocused() && !focused;
+                super.setFocused(focused);
+                if (lostFocus) applyPlaybackSpeed();
+            }
+        };
+        speedInput.setValue(formatPlaybackSpeed());
+        addRenderableWidget(speedInput);
+        addRenderableOnly(new StringWidget(speedInput.getX() + speedInput.getWidth() + 2, speedY, font.width("x"), 20, Component.literal("x"), font));
+    }
+
+    private void applyPlaybackSpeed() {
+        String value = speedInput.getValue().trim();
+        boolean valid = value.matches("(?:[0-9]+(?:\\.[0-9]*)?|\\.[0-9]+)");
+        if (valid) {
+            float speed = Float.parseFloat(value);
+            valid = speed >= 0.0001f && speed <= 15.0f;
+            if (valid) Main.SONG_PLAYER.speed = speed;
+        }
+        if (!valid) {
+            SystemToast.add(minecraft.gui.toastManager(), INVALID_SPEED_TOAST, PLAYBACK_SPEED,
+                    Component.translatable(Main.MOD_ID + ".screen.invalid_playback_speed"));
+        }
+        speedInput.setValue(formatPlaybackSpeed());
+    }
+
+    private static String formatPlaybackSpeed() {
+        return new BigDecimal(Float.toString(Main.SONG_PLAYER.speed)).stripTrailingZeros().toPlainString();
+    }
+
+    @Override
+    public boolean mouseClicked(@NonNull MouseButtonEvent event, boolean doubleClick) {
+        if (speedInput.isFocused() && !speedInput.isMouseOver(event.x(), event.y())) {
+            setFocused(null);
+        }
+        return super.mouseClicked(event, doubleClick);
+    }
+
+    @Override
+    public void removed() {
+        clearFocus();
+        super.removed();
     }
 
     private static Component getPlaybackStateText() {
