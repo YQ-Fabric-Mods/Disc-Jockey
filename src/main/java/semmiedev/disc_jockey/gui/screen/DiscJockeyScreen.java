@@ -55,6 +55,7 @@ public class DiscJockeyScreen extends Screen {
     private CycleButton<Boolean> playPauseButton;
     private SongTimeSliderWidget timeBar;
     private EditBox speedInput;
+    private float displayedSpeed;
 
     private SongListWidget songListWidget;
     private Button playButton, previewButton, refreshButton;
@@ -228,7 +229,7 @@ public class DiscJockeyScreen extends Screen {
                 if (lostFocus) applyPlaybackSpeed();
             }
         };
-        speedInput.setValue(formatPlaybackSpeed());
+        updatePlaybackSpeedInput();
         addRenderableWidget(speedInput);
         addRenderableOnly(new StringWidget(speedInput.getX() + speedInput.getWidth() + 2, speedY, font.width("x"), 20, Component.literal("x"), font));
     }
@@ -239,17 +240,18 @@ public class DiscJockeyScreen extends Screen {
         if (valid) {
             float speed = Float.parseFloat(value);
             valid = speed >= 0.0001f && speed <= 15.0f;
-            if (valid) Main.SONG_PLAYER.speed = speed;
+            if (valid) Main.SONG_PLAYER.setSpeed(value);
         }
         if (!valid) {
             SystemToast.add(minecraft.gui.toastManager(), INVALID_SPEED_TOAST, PLAYBACK_SPEED,
                     Component.translatable(Main.MOD_ID + ".screen.invalid_playback_speed"));
         }
-        speedInput.setValue(formatPlaybackSpeed());
+        updatePlaybackSpeedInput();
     }
 
-    private static String formatPlaybackSpeed() {
-        return new BigDecimal(Float.toString(Main.SONG_PLAYER.speed)).stripTrailingZeros().toPlainString();
+    private void updatePlaybackSpeedInput() {
+        displayedSpeed = Main.SONG_PLAYER.speed;
+        speedInput.setValue(new BigDecimal(Float.toString(displayedSpeed)).stripTrailingZeros().toPlainString());
     }
 
     @Override
@@ -319,6 +321,7 @@ public class DiscJockeyScreen extends Screen {
 
     @Override
     public void tick() {
+        if (displayedSpeed != Main.SONG_PLAYER.speed) updatePlaybackSpeedInput();
         songState.setMessage(getPlaybackStateText());
         timeBar.update();
         playPauseButton.setValue(Main.SONG_PLAYER.running);

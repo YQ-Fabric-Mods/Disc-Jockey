@@ -61,6 +61,7 @@ public class SongPlayer implements ClientTickEvents.StartLevelTick {
     // Just for external debugging purposes
     public HashMap<Block, Integer> missingInstrumentBlocks = new HashMap<>();
     public volatile float speed = 1.0f;
+    private Song speedSong;
 
     private long lastInteractAt = -1;
     private float availableInteracts = 8;
@@ -108,6 +109,7 @@ public class SongPlayer implements ClientTickEvents.StartLevelTick {
         }
         if (running) stop();
         this.song = song;
+        loadSongSpeed(song);
         //Main.LOGGER.info("Song length: " + song.length + " and tempo " + song.tempo);
         //Main.TICK_LISTENERS.add(this);
         if (this.playbackThread == null) startPlaybackThread();
@@ -121,6 +123,19 @@ public class SongPlayer implements ClientTickEvents.StartLevelTick {
         lastSwingSentAt = -1L;
         missingInstrumentBlocks.clear();
         didSongReachEnd = false;
+    }
+
+    public synchronized void loadSongSpeed(Song song) {
+        speedSong = song;
+        speed = Float.parseFloat(Main.config.songSpeeds.getOrDefault(song.fileName, "1"));
+    }
+
+    public synchronized void setSpeed(String speed) {
+        this.speed = Float.parseFloat(speed);
+        if (speedSong != null) {
+            Main.config.songSpeeds.put(speedSong.fileName, speed);
+            Main.configHolder.save();
+        }
     }
 
     public synchronized void stop() {

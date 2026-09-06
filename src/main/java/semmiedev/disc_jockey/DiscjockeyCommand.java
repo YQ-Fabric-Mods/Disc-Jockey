@@ -87,7 +87,8 @@ public class DiscjockeyCommand {
                                 .then(argument("speed", FloatArgumentType.floatArg(0.0001F, 15.0F))
                                         .suggests((_, builder) -> SharedSuggestionProvider.suggest(Arrays.asList("0.5", "0.75", "1", "1.25", "1.5", "2"), builder))
                                         .executes(context -> {
-                                            Main.SONG_PLAYER.speed = FloatArgumentType.getFloat(context, "speed");
+                                            String speed = context.getNodes().getLast().getRange().get(context.getInput());
+                                            Main.SONG_PLAYER.setSpeed(speed);
                                             context.getSource().sendFeedback(Component.translatable(Main.MOD_ID + ".speed_changed", Main.SONG_PLAYER.speed));
                                             return 0;
                                         })
