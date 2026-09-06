@@ -6,6 +6,7 @@ import net.minecraft.client.gui.components.Button;
 import net.minecraft.client.gui.components.CycleButton;
 import net.minecraft.client.gui.components.EditBox;
 import net.minecraft.client.gui.components.StringWidget;
+import net.minecraft.client.gui.components.toasts.SystemToast;
 import net.minecraft.client.gui.screens.ConfirmScreen;
 import net.minecraft.client.gui.screens.Screen;
 import net.minecraft.network.chat.Component;
@@ -33,6 +34,8 @@ public class DiscJockeyScreen extends Screen {
             PLAY_STOP = Component.translatable(Main.MOD_ID + ".screen.play.stop"),
             PREVIEW = Component.translatable(Main.MOD_ID + ".screen.preview"),
             PREVIEW_STOP = Component.translatable(Main.MOD_ID + ".screen.preview.stop"),
+            REFRESH_SONGS = Component.translatable(Main.MOD_ID + ".screen.refresh_songs"),
+            LOADING_SONGS = Component.translatable(Main.MOD_ID + ".screen.loading_songs"),
             DROP_HINT = Component.translatable(Main.MOD_ID + ".screen.drop_hint").copy().withStyle(ChatFormatting.GRAY),
             SONG_STATE_PLAYING = Component.translatable(Main.MOD_ID + ".screen.songstate.playing").withStyle(style -> style.withItalic(true).withColor(0xDDDDDD)),
             SONG_STATE_PAUSED = Component.translatable(Main.MOD_ID + ".screen.songstate.paused").withStyle(style -> style.withItalic(true).withColor(0xDDDDDD)),
@@ -49,10 +52,11 @@ public class DiscJockeyScreen extends Screen {
     private SongTimeSliderWidget timeBar;
 
     private SongListWidget songListWidget;
-    private Button playButton, previewButton;
+    private Button playButton, previewButton, refreshButton;
     private boolean shouldFilter;
     private String query = "";
     private int lastLoadedSongCount;
+    private int lastReloadVersion;
 
     public DiscJockeyScreen() {
         super(Main.NAME);
@@ -67,11 +71,13 @@ public class DiscJockeyScreen extends Screen {
         addRenderableWidget(songListWidget);
 
         List<SongListWidget.SongEntry> entries = new java.util.ArrayList<>();
-        for (int i = 0; i < SongLoader.SONGS.size(); i++) {
-            Song song = SongLoader.SONGS.get(i);
-            song.entry.songListWidget = songListWidget;
-            if (song.entry.selected) songListWidget.setSelected(song.entry);
-            entries.add(song.entry);
+        if (!SongLoader.loadingSongs) {
+            lastReloadVersion = SongLoader.reloadVersion;
+            for (Song song : SongLoader.SONGS) {
+                song.entry.songListWidget = songListWidget;
+                if (song.entry.selected) songListWidget.setSelected(song.entry);
+                entries.add(song.entry);
+            }
         }
         songListWidget.replaceEntries(entries);
 
@@ -190,6 +196,13 @@ public class DiscJockeyScreen extends Screen {
                 .build();
         addRenderableWidget(stopButton);
 
+        refreshButton = Button.builder(REFRESH_SONGS, _ -> {
+            SongLoader.loadSongs();
+            updateLoadingState();
+        }).pos(10, height - 80).size(100, 20).build();
+        addRenderableWidget(refreshButton);
+        updateLoadingState();
+
         addRenderableWidget(Button.builder(Component.translatable(Main.MOD_ID + ".screen.open_folder"), _ ->
                 Util.getPlatform().openPath(Main.songsFolder.toPath())
         ).pos(10, height - 55).size(100, 20).build());
@@ -234,6 +247,20 @@ public class DiscJockeyScreen extends Screen {
         int rightCenter = width / 2 + (width / 2 - 10) / 2;
         context.centeredText(font, DROP_HINT, width / 2, 5, 0xFFFFFFFF);
         context.centeredText(font, SELECT_SONG, rightCenter, 20, 0xFFFFFFFF);
+        if (SongLoader.loadingSongs) {
+            context.centeredText(font, LOADING_SONGS, rightCenter, 32 + (height - 96) / 2, 0xFFFFFFFF);
+        }
+    }
+
+    private void updateLoadingState() {
+        boolean loading = SongLoader.loadingSongs;
+        refreshButton.active = !loading;
+        refreshButton.setMessage(loading ? LOADING_SONGS : REFRESH_SONGS);
+        songListWidget.visible = !loading;
+        songListWidget.active = !loading;
+        if (loading) songListWidget.setSelected(null);
+        playButton.active = !loading || Main.SONG_PLAYER.running;
+        previewButton.active = !loading || Main.PREVIEWER.running;
     }
 
     @Override
@@ -246,7 +273,16 @@ public class DiscJockeyScreen extends Screen {
         previewButton.setMessage(Main.PREVIEWER.running ? PREVIEW_STOP : PREVIEW);
         playButton.setMessage(Main.SONG_PLAYER.running ? PLAY_STOP : PLAY);
 
-        if (!SongLoader.loadingSongs && SongLoader.SONGS.size() != lastLoadedSongCount) {
+        updateLoadingState();
+        if (SongLoader.loadingSongs) return;
+
+        if (SongLoader.reloadVersion != lastReloadVersion) {
+            lastReloadVersion = SongLoader.reloadVersion;
+            songListWidget.setSelected(null);
+            shouldFilter = true;
+        }
+
+        if (SongLoader.SONGS.size() != lastLoadedSongCount) {
             lastLoadedSongCount = SongLoader.SONGS.size();
             shouldFilter = true;
         }
@@ -273,6 +309,10 @@ public class DiscJockeyScreen extends Screen {
 
     @Override
     public void onFilesDrop(List<Path> paths) {
+        if (SongLoader.loadingSongs) {
+            SystemToast.add(minecraft.gui.toastManager(), SystemToast.SystemToastId.PACK_LOAD_FAILURE, Main.NAME, Component.translatable(Main.MOD_ID + ".still_loading"));
+            return;
+        }
         String string = paths.stream().map(Path::getFileName).map(Path::toString).collect(Collectors.joining(", "));
         if (string.length() > 300) string = string.substring(0, 300) + "...";
 
@@ -287,7 +327,7 @@ public class DiscJockeyScreen extends Screen {
                         Song song = SongLoader.loadSong(file);
                         if (song != null) {
                             Files.copy(path, Main.songsFolder.toPath().resolve(file.getName()));
-                            SongLoader.SONGS.add(song);
+                            SongLoader.addSong(song);
                         }
                     } catch (IOException exception) {
                         Main.LOGGER.warn("Failed to copy song file from {} to {}", path, Main.songsFolder.toPath(), exception);
