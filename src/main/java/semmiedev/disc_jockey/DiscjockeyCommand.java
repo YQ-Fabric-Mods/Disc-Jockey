@@ -59,13 +59,13 @@ public class DiscjockeyCommand {
                                         .suggests((_, builder) -> SharedSuggestionProvider.suggest(SongLoader.SONG_SUGGESTIONS, builder))
                                         .executes(context -> {
                                             if (!isLoading(context)) {
-                                                String songName = StringArgumentType.getString(context, "song");
-                                                Optional<Song> song = SongLoader.SONGS.stream().filter(input -> input.displayName.equals(songName)).findAny();
+                                                String relativePath = StringArgumentType.getString(context, "song");
+                                                Optional<Song> song = SongLoader.SONGS.stream().filter(input -> input.relativePath.equals(relativePath)).findAny();
                                                 if (song.isPresent()) {
                                                     Main.SONG_PLAYER.start(song.get());
                                                     return 1;
                                                 }
-                                                context.getSource().sendError(Component.translatable(Main.MOD_ID + ".song_not_found", songName));
+                                                context.getSource().sendError(Component.translatable(Main.MOD_ID + ".song_not_found", relativePath));
                                                 return 0;
                                             }
                                             return 0;

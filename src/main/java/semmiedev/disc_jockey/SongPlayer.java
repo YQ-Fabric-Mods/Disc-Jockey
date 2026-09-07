@@ -127,13 +127,13 @@ public class SongPlayer implements ClientTickEvents.StartLevelTick {
 
     public synchronized void loadSongSpeed(Song song) {
         speedSong = song;
-        speed = Float.parseFloat(Main.config.songSpeeds.getOrDefault(song.fileName, "1"));
+        speed = Float.parseFloat(Main.config.songSpeeds.getOrDefault(song.relativePath, "1"));
     }
 
     public synchronized void setSpeed(String speed) {
         this.speed = Float.parseFloat(speed);
         if (speedSong != null) {
-            Main.config.songSpeeds.put(speedSong.fileName, speed);
+            Main.config.songSpeeds.put(speedSong.relativePath, speed);
             Main.configHolder.save();
         }
     }
