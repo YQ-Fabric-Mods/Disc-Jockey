@@ -186,6 +186,7 @@ public class DiscJockeyScreen extends Screen {
         addRenderableWidget(songState);
 
         songTitle = new StringWidget(leftX, topY + 20, leftWidth, 20, Component.empty(), font);
+        songTitle.setMaxWidth(leftWidth);
         addRenderableWidget(songTitle);
 
         timeBar = new SongTimeSliderWidget(leftX, topY + 40, leftWidth, 25);

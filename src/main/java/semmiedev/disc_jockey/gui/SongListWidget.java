@@ -3,6 +3,7 @@ package semmiedev.disc_jockey.gui;
 import net.minecraft.client.Minecraft;
 import net.minecraft.client.gui.GuiGraphicsExtractor;
 import net.minecraft.client.gui.components.ObjectSelectionList;
+import net.minecraft.client.gui.components.Tooltip;
 import net.minecraft.client.gui.narration.NarrationElementOutput;
 import net.minecraft.client.input.KeyEvent;
 import net.minecraft.client.input.MouseButtonEvent;
@@ -145,7 +146,8 @@ public class SongListWidget extends ObjectSelectionList<SongListWidget.ListEntry
                 drawText(context, song.relativePath, x + 23, y + 18, entryWidth - 27, 0xFF808080);
             }
             if (hovered && !isOverFavoriteButton(mouseX, mouseY)) {
-                context.setTooltipForNextFrame(Component.literal(song.displayName + "\n" + song.relativePath), mouseX, mouseY);
+                context.setTooltipForNextFrame(Tooltip.splitTooltip(client,
+                        Component.literal(song.displayName)), mouseX, mouseY);
             }
 
             int u = (favorite ? 26 : 0) + (isOverFavoriteButton(mouseX, mouseY) ? 13 : 0);
